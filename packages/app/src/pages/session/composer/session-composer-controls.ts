@@ -47,7 +47,7 @@ export function createPromptInputController(input: {
         selection: input.model ?? local.model,
         paid: providers.paid().length > 0,
         loading:
-          (local.agent.visible() && agentsQuery.isLoading) ||
+          agentsQuery.isLoading ||
           providersQuery.isLoading ||
           globalProvidersQuery.isLoading,
       },

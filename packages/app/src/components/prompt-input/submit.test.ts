@@ -38,6 +38,7 @@ let params: { id?: string } = {}
 let search: { draftId?: string } = {}
 let selected = "/repo/worktree-a"
 let variant: string | undefined
+let currentAgentName: string | undefined = "agent"
 let permissionServer = "server-a"
 let createSessionGate: Promise<void> | undefined
 
@@ -148,7 +149,7 @@ beforeAll(async () => {
         variant: { current: () => variant },
       },
       agent: {
-        current: () => ({ name: "agent" }),
+        current: () => (currentAgentName ? { name: currentAgentName } : undefined),
       },
       session: {
         promote(directory: string, sessionID: string) {
@@ -298,6 +299,7 @@ beforeEach(() => {
   syncedDirectories.length = 0
   selected = "/repo/worktree-a"
   variant = undefined
+  currentAgentName = "agent"
   permissionServer = "server-a"
   createSessionGate = undefined
   serverSessionSyncs = 0
@@ -492,6 +494,34 @@ describe("prompt submit worktree selection", () => {
     expect((promptInputs[0] as { legacyParts?: { id: string; type: string; text?: string }[] }).legacyParts).toEqual([
       { id: expect.stringMatching(/^prt_/), type: "text", text: "ls" },
     ])
+  })
+
+  test("uses the built-in build agent while the agent catalog is loading", async () => {
+    params = { id: "session-1" }
+    currentAgentName = undefined
+
+    const submit = createPromptSubmit({
+      prompt,
+      info: () => ({ id: "session-1" }),
+      imageAttachments: () => [],
+      commentCount: () => 0,
+      autoAccept: () => false,
+      mode: () => "normal",
+      working: () => false,
+      editor: () => undefined,
+      queueScroll: () => undefined,
+      promptLength: (value) => value.reduce((sum, part) => sum + ("content" in part ? part.content.length : 0), 0),
+      addToHistory: () => undefined,
+      resetHistoryNavigation: () => undefined,
+      setMode: () => undefined,
+      setPopover: () => undefined,
+      onSubmit: () => undefined,
+    })
+
+    await submit.handleSubmit({ preventDefault: () => undefined } as unknown as Event)
+
+    expect(optimistic[0]?.message.agent).toBe("build")
+    expect(promptInputs[0]).toMatchObject({ agent: "build" })
   })
 
   test("submits slash commands through the current session API", async () => {

@@ -1852,7 +1852,11 @@ const layer = Layer.effect(
                 },
                 model,
               )
-            : sdk.languageModel(model.api.id)
+            : model.api.npm === "@ai-sdk/openai"
+              ? "responses" in sdk && typeof sdk.responses === "function"
+                ? sdk.responses(model.api.id)
+                : sdk.languageModel(model.api.id)
+              : sdk.languageModel(model.api.id)
           s.models.set(key, language)
           return language
         },

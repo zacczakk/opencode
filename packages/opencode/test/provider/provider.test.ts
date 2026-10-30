@@ -314,6 +314,34 @@ it.instance("getModel returns model for valid provider/model", () =>
   }),
 )
 
+it.instance(
+  "custom OpenAI provider models use the Responses API",
+  Effect.gen(function* () {
+    const provider = yield* Provider.Service
+    const model = yield* provider.getModel(ProviderV2.ID.make("custom-openai"), ModelV2.ID.make("gpt-5"))
+    const language = yield* provider.getLanguage(model)
+    expect((language as { provider?: string }).provider).toBe("custom-openai.responses")
+  }),
+  {
+    config: {
+      provider: {
+        "custom-openai": {
+          name: "Custom OpenAI",
+          npm: "@ai-sdk/openai",
+          api: "https://api.custom.com/v1",
+          options: { apiKey: "custom-key" },
+          models: {
+            "gpt-5": {
+              name: "GPT-5",
+              provider: { npm: "@ai-sdk/openai" },
+            },
+          },
+        },
+      },
+    },
+  },
+)
+
 it.instance("getModel throws ModelNotFoundError for invalid model", () =>
   Effect.gen(function* () {
     yield* set("ANTHROPIC_API_KEY", "test-api-key")
